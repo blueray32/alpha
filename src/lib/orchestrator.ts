@@ -138,7 +138,8 @@ export class Orchestrator extends EventEmitter {
       const forgeResult = await this.sendCommand('Forge', '/build', {
         feature: plan.feature,
         tasks: plan.agents.forge.tasks,
-        files: plan.agents.forge.files || [],
+        // Note: files would be added here if we had actual file content
+        // For now, just acknowledge the build tasks
       });
 
       buildResults.push(`Forge: ${forgeResult.status}`);
@@ -156,7 +157,8 @@ export class Orchestrator extends EventEmitter {
       const blinkResult = await this.sendCommand('Blink', '/build', {
         feature: plan.feature,
         tasks: plan.agents.blink.tasks,
-        files: plan.agents.blink.files || [],
+        // Note: files would be added here if we had actual file content
+        // For now, just acknowledge the build tasks
       });
 
       buildResults.push(`Blink: ${blinkResult.status}`);

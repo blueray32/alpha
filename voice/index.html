@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alpha Voice - Talk to Your Agents</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 2em;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 0.95em;
+    }
+
+    .agent-selector {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .agent-button {
+      padding: 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .agent-button:hover {
+      border-color: #667eea;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    .agent-button.active {
+      border-color: #667eea;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .agent-icon {
+      font-size: 2em;
+      margin-bottom: 8px;
+    }
+
+    .agent-name {
+      font-weight: 600;
+      font-size: 1.1em;
+      margin-bottom: 4px;
+    }
+
+    .agent-role {
+      font-size: 0.85em;
+      opacity: 0.8;
+    }
+
+    .voice-controls {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .mic-button {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-size: 3em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mic-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 30px rgba(102, 126, 234, 0.6);
+    }
+
+    .mic-button.listening {
+      animation: pulse 1.5s infinite;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+    }
+
+    .mic-button.connected {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .status {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.95em;
+      color: #666;
+      min-height: 24px;
+    }
+
+    .status.active {
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .transcript-container {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+
+    .transcript-message {
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 8px;
+      line-height: 1.5;
+    }
+
+    .transcript-message.user {
+      background: #e3f2fd;
+      text-align: right;
+    }
+
+    .transcript-message.agent {
+      background: white;
+      border: 1px solid #e0e0e0;
+    }
+
+    .message-label {
+      font-weight: 600;
+      font-size: 0.85em;
+      margin-bottom: 4px;
+      color: #667eea;
+    }
+
+    .message-text {
+      color: #333;
+    }
+
+    .connection-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      margin-bottom: 20px;
+    }
+
+    .connection-status.disconnected {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .connection-status.connected {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .instructions {
+      background: #fff3e0;
+      border-left: 4px solid #ff9800;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+      color: #666;
+    }
+
+    .instructions strong {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎤 Alpha Voice</h1>
+    <p class="subtitle">Talk to your AI development team</p>
+
+    <div class="instructions">
+      <strong>How to use:</strong>
+      <ol style="margin-top: 8px; padding-left: 20px;">
+        <li>Select an agent below</li>
+        <li>Click the microphone to connect</li>
+        <li>Start speaking naturally!</li>
+      </ol>
+    </div>
+
+    <div class="agent-selector">
+      <button class="agent-button active" data-agent="alpha">
+        <div class="agent-icon">🎯</div>
+        <div class="agent-name">Alpha</div>
+        <div class="agent-role">Orchestrator</div>
+      </button>
+      <button class="agent-button" data-agent="forge">
+        <div class="agent-icon">🔧</div>
+        <div class="agent-name">Forge</div>
+        <div class="agent-role">Backend</div>
+      </button>
+      <button class="agent-button" data-agent="blink">
+        <div class="agent-icon">🎨</div>
+        <div class="agent-name">Blink</div>
+        <div class="agent-role">Frontend</div>
+      </button>
+      <button class="agent-button" data-agent="qa-lens">
+        <div class="agent-icon">🔍</div>
+        <div class="agent-name">QA-Lens</div>
+        <div class="agent-role">Testing</div>
+      </button>
+    </div>
+
+    <div class="voice-controls">
+      <button class="mic-button" id="micButton">
+        🎤
+      </button>
+      <div class="status" id="status">Select an agent and click to start</div>
+    </div>
+
+    <div class="transcript-container" id="transcript">
+      <div style="text-align: center; color: #999;">
+        Your conversation will appear here...
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const RELAY_URL = 'ws://localhost:8081';
+
+    let ws = null;
+    let audioContext = null;
+    let mediaStream = null;
+    let selectedAgent = 'alpha';
+    let isConnected = false;
+    let isListening = false;
+
+    const micButton = document.getElementById('micButton');
+    const status = document.getElementById('status');
+    const transcript = document.getElementById('transcript');
+    const agentButtons = document.querySelectorAll('.agent-button');
+
+    // Agent selection
+    agentButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        if (isConnected) {
+          status.textContent = 'Disconnect before switching agents';
+          return;
+        }
+
+        agentButtons.forEach(b => b.classList.remove('active'));
+        button.classList.add('active');
+        selectedAgent = button.dataset.agent;
+        status.textContent = `Ready to talk to ${button.querySelector('.agent-name').textContent}`;
+      });
+    });
+
+    // Microphone button
+    micButton.addEventListener('click', async () => {
+      if (!isConnected) {
+        await connect();
+      } else {
+        disconnect();
+      }
+    });
+
+    async function connect() {
+      try {
+        status.textContent = 'Requesting microphone access...';
+
+        // Get microphone access
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 24000,
+          }
+        });
+
+        status.textContent = 'Connecting to OpenAI...';
+
+        // Connect to relay server
+        ws = new WebSocket(`${RELAY_URL}?agent=${selectedAgent}`);
+
+        ws.onopen = () => {
+          isConnected = true;
+          micButton.classList.add('connected');
+          status.textContent = `Connected! Start speaking to ${selectedAgent}...`;
+          status.classList.add('active');
+          startAudioCapture();
+        };
+
+        ws.onmessage = (event) => {
+          handleRealtimeEvent(JSON.parse(event.data));
+        };
+
+        ws.onclose = () => {
+          disconnect();
+        };
+
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          status.textContent = 'Connection error. Make sure the voice server is running.';
+          disconnect();
+        };
+
+      } catch (error) {
+        console.error('Error connecting:', error);
+        status.textContent = 'Failed to access microphone';
+      }
+    }
+
+    function disconnect() {
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream = null;
+      }
+      if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+      }
+      isConnected = false;
+      isListening = false;
+      micButton.classList.remove('connected', 'listening');
+      status.textContent = 'Disconnected';
+      status.classList.remove('active');
+    }
+
+    async function startAudioCapture() {
+      audioContext = new AudioContext({ sampleRate: 24000 });
+      const source = audioContext.createMediaStreamSource(mediaStream);
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+      source.connect(processor);
+      processor.connect(audioContext.destination);
+
+      processor.onaudioprocess = (e) => {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+        const inputData = e.inputBuffer.getChannelData(0);
+        const pcm16 = convertFloat32ToPCM16(inputData);
+
+        // Send audio to OpenAI
+        ws.send(JSON.stringify({
+          type: 'input_audio_buffer.append',
+          audio: arrayBufferToBase64(pcm16),
+        }));
+      };
+    }
+
+    function convertFloat32ToPCM16(float32Array) {
+      const pcm16 = new Int16Array(float32Array.length);
+      for (let i = 0; i < float32Array.length; i++) {
+        const s = Math.max(-1, Math.min(1, float32Array[i]));
+        pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+      return pcm16.buffer;
+    }
+
+    function arrayBufferToBase64(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    }
+
+    function base64ToArrayBuffer(base64) {
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+
+    function handleRealtimeEvent(event) {
+      console.log('Event:', event.type);
+
+      switch (event.type) {
+        case 'conversation.item.input_audio_transcription.completed':
+          addTranscript('user', event.transcript);
+          micButton.classList.add('listening');
+          isListening = true;
+          status.textContent = `You said: "${event.transcript}"`;
+          break;
+
+        case 'response.audio.delta':
+          // Play audio response
+          playAudioDelta(event.delta);
+          break;
+
+        case 'response.audio_transcript.delta':
+          updateAgentTranscript(event.delta);
+          break;
+
+        case 'response.audio_transcript.done':
+          finalizeAgentTranscript(event.transcript);
+          micButton.classList.remove('listening');
+          isListening = false;
+          status.textContent = 'Listening...';
+          break;
+
+        case 'response.done':
+          status.textContent = 'Ready for next message...';
+          break;
+
+        case 'error':
+          console.error('Realtime API error:', event.error);
+          status.textContent = `Error: ${event.error.message}`;
+          break;
+      }
+    }
+
+    let currentAudioElement = null;
+    let audioChunks = [];
+
+    function playAudioDelta(base64Audio) {
+      const audioData = base64ToArrayBuffer(base64Audio);
+      audioChunks.push(audioData);
+
+      // Play audio (simplified - in production, use Web Audio API for smoother playback)
+      if (!currentAudioElement) {
+        currentAudioElement = new Audio();
+        currentAudioElement.onended = () => {
+          currentAudioElement = null;
+          audioChunks = [];
+        };
+      }
+    }
+
+    let currentAgentMessage = null;
+
+    function updateAgentTranscript(delta) {
+      if (!currentAgentMessage) {
+        currentAgentMessage = document.createElement('div');
+        currentAgentMessage.className = 'transcript-message agent';
+        currentAgentMessage.innerHTML = `
+          <div class="message-label">${selectedAgent.toUpperCase()}</div>
+          <div class="message-text"></div>
+        `;
+        transcript.appendChild(currentAgentMessage);
+        transcript.scrollTop = transcript.scrollHeight;
+      }
+
+      const textEl = currentAgentMessage.querySelector('.message-text');
+      textEl.textContent += delta;
+      transcript.scrollTop = transcript.scrollHeight;
+    }
+
+    function finalizeAgentTranscript(fullText) {
+      if (currentAgentMessage) {
+        const textEl = currentAgentMessage.querySelector('.message-text');
+        textEl.textContent = fullText;
+      }
+      currentAgentMessage = null;
+    }
+
+    function addTranscript(role, text) {
+      // Clear placeholder
+      if (transcript.children[0]?.textContent.includes('conversation will appear')) {
+        transcript.innerHTML = '';
+      }
+
+      const message = document.createElement('div');
+      message.className = `transcript-message ${role}`;
+      message.innerHTML = `
+        <div class="message-label">${role === 'user' ? 'YOU' : selectedAgent.toUpperCase()}</div>
+        <div class="message-text">${text}</div>
+      `;
+      transcript.appendChild(message);
+      transcript.scrollTop = transcript.scrollHeight;
+    }
+  </script>
+</body>
+</html>

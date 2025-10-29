@@ -3,18 +3,37 @@
   "title": "Slash /build request",
   "type": "object",
   "properties": {
+    "feature": {
+      "type": "string",
+      "description": "Feature name or description"
+    },
     "tasks": {
       "type": "array",
       "items": {
-        "type": "object"
-      }
+        "type": "string"
+      },
+      "description": "List of task descriptions"
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": ["path", "content"]
+      },
+      "description": "Files to write with their content"
     },
     "respect_contracts": {
       "type": "boolean",
       "default": true
     }
   },
-  "required": [
-    "tasks"
-  ]
+  "required": []
 }
