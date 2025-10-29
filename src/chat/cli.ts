@@ -3,6 +3,10 @@
  * Interactive CLI for chatting with Alpha agents
  */
 
+// Load environment variables from .env file
+import dotenv from 'dotenv';
+dotenv.config();
+
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { ConversationalAgent, type AgentName } from './agent-chat.js';
