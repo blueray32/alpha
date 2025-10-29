@@ -8,6 +8,10 @@ import chalk from 'chalk';
 import { ConversationalAgent, type AgentName } from './agent-chat.js';
 
 const AGENTS: Record<AgentName, { persona: string; color: typeof chalk.blue }> = {
+  'Alpha': {
+    persona: 'agents/personas/alpha.md',
+    color: chalk.cyan,
+  },
   'Forge': {
     persona: 'agents/personas/forge.md',
     color: chalk.blue,
@@ -40,6 +44,8 @@ async function main() {
       name: 'agentName',
       message: 'Which agent would you like to chat with?',
       choices: [
+        { name: '🎯 Alpha - Master Orchestrator (Coordinates All Agents)', value: 'Alpha' },
+        { name: '─────────────────────────────────────────────', disabled: true },
         { name: '🔧 Forge - Backend Builder', value: 'Forge' },
         { name: '🎨 Blink - Frontend Developer', value: 'Blink' },
         { name: '🔍 QA-Lens - Quality Assurance', value: 'QA-Lens' },

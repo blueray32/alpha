@@ -1,8 +1,26 @@
 # Alpha Conversational Agents
 
-Chat naturally with Alpha's three core agents using the CLI interface.
+Chat naturally with Alpha and its three specialist agents using the CLI interface.
 
-## The Three Agents
+## Alpha - The Master Orchestrator
+
+### 🎯 **Alpha** - Project Manager
+- **Role**: Master orchestrator and coordinator
+- **Personality**: Strategic, decisive, quality-focused
+- **Coordinates**: Forge, Blink, and QA-Lens
+- **Purpose**: Breaks down features, delegates tasks, ensures P→I→V loop
+
+**When to use Alpha:**
+- Building complete features (backend + frontend + testing)
+- You want someone to coordinate everything
+- You're not sure which agent to talk to
+- You want the full P→I→V loop automated
+
+**Example**: "Alpha, build user authentication" → Alpha coordinates all three agents
+
+---
+
+## The Three Specialist Agents
 
 ### 🔧 Forge - Backend Builder
 - **Role**: Backend development specialist
@@ -33,6 +51,48 @@ npm run chat
 ```
 
 ## Example Conversations
+
+### With Alpha (Orchestrator)
+```
+You: Alpha, build user authentication
+Alpha: I'll coordinate building a complete auth system. Here's my plan:
+
+       📋 Planning:
+
+       **Forge** (Backend):
+       - POST /api/auth/login endpoint with JWT
+       - POST /api/auth/register endpoint
+       - Auth middleware for protected routes
+       - Password hashing with bcrypt
+
+       **Blink** (Frontend):
+       - /ui/login.html form with validation
+       - /ui/register.html signup form
+       - Redirect logic after login
+
+       **QA-Lens** (Testing):
+       - Login flow validation
+       - Registration flow validation
+       - Auth protection testing
+
+       🔄 Execution Order:
+       1. Forge builds the API first
+       2. Blink creates the UI
+       3. QA-Lens validates everything
+
+       Should I proceed and coordinate the team?
+
+You: Yes
+Alpha: ✅ Forge completed the auth API
+       🔄 Blink is creating the login/register forms...
+       ⏳ QA-Lens will validate when ready
+
+       [5 minutes later]
+
+       ✅ Feature complete!
+       Validation: ✅ 22/22 steps passed
+       Ready to merge!
+```
 
 ### With Forge (Backend)
 ```

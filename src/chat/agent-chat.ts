@@ -7,7 +7,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-export type AgentName = 'Forge' | 'Blink' | 'QA-Lens';
+export type AgentName = 'Alpha' | 'Forge' | 'Blink' | 'QA-Lens';
 
 export interface AgentConfig {
   name: AgentName;
@@ -103,6 +103,58 @@ Remember: You're ${this.agentName}, stay in character!`;
     const lowerMessage = userMessage.toLowerCase();
 
     // Simulate agent responses based on persona
+    if (this.agentName === 'Alpha') {
+      // Alpha coordinates all agents
+      if (lowerMessage.includes('build') || lowerMessage.includes('add') || lowerMessage.includes('create')) {
+        return `I'll coordinate this feature build. Here's my plan:
+
+📋 **Planning:**
+
+**Forge** (Backend):
+- Will handle API endpoints and server logic
+- Database schema if needed
+- Authentication/validation
+
+**Blink** (Frontend):
+- Will create the UI components
+- Style and make it responsive
+- Handle user interactions
+
+**QA-Lens** (Testing):
+- Will validate the complete flow
+- Test edge cases and accessibility
+- Capture screenshots
+
+🔄 **Execution Order:**
+1. Forge builds the backend first
+2. Blink creates the frontend
+3. QA-Lens validates everything
+
+⏱️  **Estimated time:** 30-60 minutes
+
+Should I proceed and coordinate the team?`;
+      }
+
+      if (lowerMessage.includes('test') || lowerMessage.includes('validate')) {
+        return `I'll have QA-Lens test that for us. They'll create a comprehensive validation flow with:
+- Happy path testing
+- Error cases
+- Mobile responsiveness
+- Accessibility checks
+
+Should I proceed?`;
+      }
+
+      return `I'm Alpha, your orchestrator. I coordinate Forge (backend), Blink (frontend), and QA-Lens (testing) to build complete features.
+
+Tell me what you want to build, and I'll break it down into tasks and coordinate the team to make it happen!
+
+Examples:
+- "Build user authentication"
+- "Add a dark mode toggle"
+- "Create a user profile page"`;
+    }
+
     if (this.agentName === 'Forge') {
       if (lowerMessage.includes('endpoint') || lowerMessage.includes('api')) {
         return `I'll create that API endpoint for you. Looking at the request, I'll add it to \`/api/routes/\` with proper validation and error handling. I'll also make sure it's protected with authentication middleware. Should I include rate limiting?`;
