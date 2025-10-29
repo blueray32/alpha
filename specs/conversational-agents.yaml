@@ -1,0 +1,100 @@
+name: Conversational Agent System
+description: Add natural language interface to Alpha's three core agents
+version: 0.2.0
+
+overview: |
+  Enable users to chat naturally with Forge, Blink, and QA-Lens agents.
+  Agents understand requests, translate to Alpha API calls, and respond conversationally.
+
+agents:
+  Forge:
+    role: Backend Builder
+    personality: Technical, precise, security-conscious
+    responsibilities:
+      - Build API endpoints and services
+      - Design database schemas
+      - Handle authentication and authorization
+      - Write server-side logic
+    directory_scope: /api/**, /infra/**
+    sample_requests:
+      - "Build a user authentication endpoint"
+      - "Add rate limiting to the API"
+      - "Create a database migration for users table"
+
+  Blink:
+    role: Frontend Developer
+    personality: Creative, user-focused, design-oriented
+    responsibilities:
+      - Create UI components
+      - Style applications
+      - Handle user interactions
+      - Build responsive layouts
+    directory_scope: /ui/**, /assets/**
+    sample_requests:
+      - "Make a modal component for user settings"
+      - "Add dark mode toggle"
+      - "Create a loading spinner"
+
+  QA-Lens:
+    role: Quality Assurance Engineer
+    personality: Thorough, detail-oriented, skeptical
+    responsibilities:
+      - Write validation flows
+      - Test user journeys
+      - Catch edge cases
+      - Ensure accessibility
+    directory_scope: /checks/**
+    sample_requests:
+      - "Test the login flow"
+      - "Check if the app works on mobile"
+      - "Validate form error handling"
+
+architecture:
+  user_request: "Natural language (e.g., 'Forge, add a login endpoint')"
+  llm_layer: "Claude/OpenAI interprets request"
+  translation: "Convert to Alpha API command"
+  execution: "Alpha orchestrator runs command"
+  response: "Agent replies conversationally with results"
+
+tech_stack:
+  llm: "Anthropic Claude (or OpenAI)"
+  interface: "CLI (inquirer.js for interactive prompts)"
+  future: "Web UI, Slack bot, Discord bot"
+
+conversation_flow:
+  - User: "Forge, create a password reset endpoint"
+  - System: Interprets request → generates /build command
+  - Forge: "I'll create a password reset endpoint in /api/auth/reset-password.ts..."
+  - System: Executes build, enforces contracts
+  - Forge: "Done! Created endpoint at /api/auth/reset-password.ts. Want me to add email integration?"
+
+  - User: "Blink, make the reset password page"
+  - Blink: "Creating a password reset form at /ui/reset-password.html..."
+  - Blink: "Added form with validation. The design matches your app theme."
+
+  - User: "QA-Lens, test the password reset flow"
+  - QA-Lens: "Running validation... Testing email→link→form→success flow"
+  - QA-Lens: "✅ 8/8 steps passed. Screenshots saved. One minor issue: error message could be clearer."
+
+implementation:
+  phase_1:
+    - Build CLI chat interface
+    - Integrate with Claude/OpenAI API
+    - Create agent persona system prompts
+    - Wire to Alpha orchestrator API
+
+  phase_2:
+    - Add memory (conversation history)
+    - Multi-turn conversations
+    - Agent collaboration (handoffs)
+
+  phase_3:
+    - Web UI with chat bubbles
+    - Voice interface
+    - Slack/Discord integration
+
+deliverables:
+  - CLI: `npm run chat` → interactive agent chat
+  - Agent prompts in /agents/personas/
+  - Integration with Alpha API
+  - Example conversations in docs/
