@@ -8,6 +8,7 @@ import { ContractGuard } from './lib/contract-guard.js';
 import { GuardedWriter } from './lib/guarded-writer.js';
 import { ValidationRunner } from './lib/validation-runner.js';
 import { OutcomeLedger } from './lib/outcome-ledger.js';
+import { SkillRegistry } from './lib/skill-registry.js';
 import { agentRoutes } from './routes/agents.js';
 import { commandRoutes } from './routes/commands.js';
 
@@ -33,6 +34,7 @@ async function buildServer() {
   const guardedWriter = new GuardedWriter(contractGuard, runManager);
   const validationRunner = new ValidationRunner();
   const outcomeLedger = new OutcomeLedger();
+  const skillRegistry = new SkillRegistry();
 
   // SSE endpoint for Tower
   fastify.get('/events', async (request, reply) => {
@@ -138,6 +140,32 @@ async function buildServer() {
       orchestrationId: id,
       records,
     };
+  });
+
+  // Skills endpoints
+  fastify.get('/skills', async () => {
+    const skills = skillRegistry.listSkills();
+    return {
+      skills: skills.map((s) => ({
+        name: s.name,
+        description: s.description,
+        agent: s.agent,
+        parameters: s.parameters,
+      })),
+    };
+  });
+
+  fastify.post('/skills/:name/execute', async (request, reply) => {
+    const { name } = request.params as { name: string };
+    const params = request.body as Record<string, unknown>;
+
+    const result = await skillRegistry.executeSkill(name, params);
+
+    if (!result.success) {
+      return reply.status(400).send(result);
+    }
+
+    return result;
   });
 
   // Cleanup on shutdown
