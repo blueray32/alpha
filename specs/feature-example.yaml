@@ -1,0 +1,17 @@
+feature: Video Generation UI
+tasks:
+  - owner: Forge
+    path: /api/videos
+    acceptance:
+      - "POST /api/videos returns 200"
+      - "transcode job enqueued"
+  - owner: Blink
+    path: /ui/pages/generate.tsx
+    acceptance:
+      - "can submit prompt"
+      - "shows thumbnail"
+qa:
+  flows:
+    - smoke/ui_submit_and_render
+  env:
+    baseUrl: "http://localhost:3000"

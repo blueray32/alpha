@@ -1,0 +1,11 @@
+name: smoke/ui_submit_and_render
+steps:
+  - open: "${baseUrl}/"
+  - assert: "#prompt-input"
+  - type:
+      selector: "#prompt-input"
+      text: "A serene mountain lake at sunrise"
+  - assert: "#submit:enabled"
+  - click: "#submit"
+  - wait_for: "#result-thumbnail"
+  - screenshot: "checks/run-${run_id}/thumbnail.png"

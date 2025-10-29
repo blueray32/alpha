@@ -1,0 +1,21 @@
+# Directory scopes and guardrails for agents
+owners:
+  Forge:
+    write:
+      - "/api/**"
+      - "/infra/**"
+    read:
+      - "/ui/**"
+  Blink:
+    write:
+      - "/ui/**"
+      - "/assets/**"
+    read:
+      - "/api/**"
+  QA-Lens:
+    write:
+      - "/checks/**"
+    read:
+      - "/**"
+pre_merge_gates:
+  - "qa_lens_smoke_flow"   # must pass before merge
