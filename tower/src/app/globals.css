@@ -1,0 +1,133 @@
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #0a0a0a;
+  color: #e0e0e0;
+}
+
+code {
+  font-family: 'Courier New', monospace;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.event-list {
+  list-style: none;
+}
+
+.event-item {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  transition: background 0.2s;
+}
+
+.event-item:hover {
+  background: #222;
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.event-agent {
+  font-weight: 600;
+  color: #4a9eff;
+}
+
+.event-command {
+  font-family: 'Courier New', monospace;
+  color: #7dd3fc;
+  font-size: 0.9rem;
+}
+
+.event-time {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.event-status {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.status-passed {
+  background: #065f46;
+  color: #6ee7b7;
+}
+
+.status-failed {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+
+.status-completed {
+  background: #1e3a8a;
+  color: #93c5fd;
+}
+
+.status-blocked {
+  background: #78350f;
+  color: #fbbf24;
+}
+
+.event-details {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.connection-status {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.connected {
+  background: #065f46;
+  color: #6ee7b7;
+}
+
+.disconnected {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+
+.run-link {
+  color: #4a9eff;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.run-link:hover {
+  text-decoration: underline;
+}

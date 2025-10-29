@@ -1,0 +1,39 @@
+{
+  "name": "alpha",
+  "version": "0.1.0",
+  "description": "A composable, closed-loop, multi-agent application",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:server": "tsx watch src/server.ts",
+    "dev:tower": "cd tower && npm run dev",
+    "validate": "tsx src/cli/validate.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/ --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\" \"tower/**/*.{ts,tsx}\"",
+    "build": "tsc && cd tower && npm run build",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "fastify": "^4.25.2",
+    "@fastify/cors": "^8.4.2",
+    "yaml": "^2.3.4",
+    "playwright": "^1.40.1",
+    "ajv": "^8.12.0",
+    "nanoid": "^5.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3",
+    "tsx": "^4.7.0",
+    "vitest": "^1.1.0",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
+    "@typescript-eslint/parser": "^6.17.0",
+    "prettier": "^3.1.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
