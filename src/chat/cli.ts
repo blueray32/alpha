@@ -75,6 +75,7 @@ async function main() {
   console.log(chalk.gray('Type "exit" to quit, "clear" to reset conversation\n'));
 
   // Chat loop
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     const { message } = await inquirer.prompt([
       {

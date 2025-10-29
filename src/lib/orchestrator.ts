@@ -60,7 +60,7 @@ export class Orchestrator extends EventEmitter {
     return this.recovery.executeWithRecovery(
       'orchestration',
       { feature: plan.feature },
-      async (checkpoint) => {
+      async (_checkpoint) => {
         this.emit('orchestration:start', { plan });
 
         try {

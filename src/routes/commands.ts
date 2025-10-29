@@ -148,7 +148,7 @@ async function handleValidate(
   request: CommandRequest,
   agentName: string,
   validationRunner: ValidationRunner,
-  runManager: RunManager
+  _runManager: RunManager
 ): Promise<CommandResponse> {
   const { flow, env } = request.payload as { flow: string; env?: Record<string, string> };
 
@@ -230,9 +230,9 @@ async function handleBuild(
 }
 
 async function handlePlan(
-  request: CommandRequest,
-  agentName: string,
-  runManager: RunManager
+  _request: CommandRequest,
+  _agentName: string,
+  _runManager: RunManager
 ): Promise<CommandResponse> {
   // Stub implementation
   return {

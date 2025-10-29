@@ -118,7 +118,7 @@ export class GuardedWriter {
 
       return {
         success: false,
-        results: files.map((f) => ({
+        results: files.map((_f) => ({
           success: false,
           error: 'Batch write failed due to contract violations',
           violations: allViolations,

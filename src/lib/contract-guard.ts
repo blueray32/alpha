@@ -1,7 +1,6 @@
 import { readFileSync } from 'fs';
 import { parse } from 'yaml';
 import { ContractScopes } from '../types/index.js';
-import { join } from 'path';
 
 export class ContractGuard {
   private scopes: ContractScopes;

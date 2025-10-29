@@ -3,7 +3,7 @@
  * Persists and restores conversation history across sessions
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { nanoid } from 'nanoid';
 
@@ -174,8 +174,7 @@ export class ConversationMemory {
     }
 
     try {
-      const fs = require('fs');
-      fs.unlinkSync(filePath);
+      unlinkSync(filePath);
       console.log(`[Memory] Deleted conversation: ${conversationId}`);
       return true;
     } catch (error) {

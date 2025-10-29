@@ -3,7 +3,7 @@
  * Provides checkpointing and recovery for operations
  */
 
-import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { nanoid } from 'nanoid';
 
@@ -166,8 +166,7 @@ export class RecoveryHooks {
       return [];
     }
 
-    const fs = require('fs');
-    const files = fs.readdirSync(this.checkpointsDir).filter((f: string) => f.endsWith('.json'));
+    const files = readdirSync(this.checkpointsDir).filter((f: string) => f.endsWith('.json'));
 
     return files
       .map((file: string) => {
@@ -191,12 +190,11 @@ export class RecoveryHooks {
     cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
 
     let cleared = 0;
-    const fs = require('fs');
 
     for (const checkpoint of checkpoints) {
       if (new Date(checkpoint.timestamp) < cutoffDate) {
         try {
-          fs.unlinkSync(join(this.checkpointsDir, `${checkpoint.id}.json`));
+          unlinkSync(join(this.checkpointsDir, `${checkpoint.id}.json`));
           cleared++;
         } catch {
           // Ignore errors

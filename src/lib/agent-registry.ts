@@ -1,5 +1,4 @@
 import { Agent, AgentType } from '../types/index.js';
-import { nanoid } from 'nanoid';
 
 export class AgentRegistry {
   private agents: Map<string, Agent> = new Map();
