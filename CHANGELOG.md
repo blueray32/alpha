@@ -13,15 +13,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic model selection by preference: Sonnet → Opus → Haiku
 - Safe fallback to OpenAI when Anthropic is unavailable
 - Environment variable `OPENAI_TEXT_MODEL` for configuring OpenAI fallback model
+- Orchestrator service to execute full P→I→V loop (Plan → Implement → Validate)
+- Intent detection for "yes/proceed/do it" responses in chat
+- Automatic execution of orchestration when user confirms plan
+- Progress streaming during P→I→V execution with emoji indicators
+- Context tracking to maintain plan state between messages
 
 ### Changed
 - Agent chat system now discovers models at runtime instead of using hardcoded IDs
 - CLI now supports both `ANTHROPIC_API_KEY` and `OPENAI_API_KEY`
 - Improved error handling with graceful fallback to demo mode
+- Conversational agents now coordinate real P→I→V workflow via orchestrator
+- Chat interface displays detailed progress during feature builds
 
 ### Fixed
 - 404 errors from hardcoded Claude model IDs
 - API key handling now never logs sensitive credentials
+- "yes/proceed" responses now trigger actual orchestration instead of just acknowledgment
 
 ## [0.1.0] - 2025-01-29
 

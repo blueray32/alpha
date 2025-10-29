@@ -9,6 +9,7 @@ import OpenAI from 'openai';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { modelDiscovery, type ModelConfig } from '../lib/model-discovery.js';
+import { Orchestrator, type OrchestrationPlan } from '../lib/orchestrator.js';
 
 export type AgentName = 'Alpha' | 'Forge' | 'Blink' | 'QA-Lens';
 
@@ -32,6 +33,9 @@ export class ConversationalAgent {
   private agentName: AgentName;
   private alphaApiBase: string;
   private initialized: boolean = false;
+  private orchestrator: Orchestrator;
+  private pendingPlan: OrchestrationPlan | null = null;
+  private lastResponseWasConfirmation: boolean = false;
 
   constructor(config: AgentConfig) {
     this.agentName = config.name;
@@ -40,6 +44,9 @@ export class ConversationalAgent {
     // Load persona
     const personaPath = join(process.cwd(), config.personaPath);
     this.persona = readFileSync(personaPath, 'utf-8');
+
+    // Initialize orchestrator
+    this.orchestrator = new Orchestrator(config.apiEndpoint);
   }
 
   /**
@@ -78,9 +85,16 @@ export class ConversationalAgent {
       await this.initialize();
     }
 
+    // Check if this is a confirmation (yes/proceed/do it) after a plan
+    if (this.shouldExecutePlan(userMessage)) {
+      return await this.executePendingPlan();
+    }
+
     // Demo mode if no client available
     if (!this.anthropicClient && !this.openaiClient) {
-      return this.getSimulatedResponse(userMessage);
+      const response = this.getSimulatedResponse(userMessage);
+      this.trackConfirmationState(response);
+      return response;
     }
 
     try {
@@ -92,7 +106,9 @@ export class ConversationalAgent {
       } else if (this.openaiClient && this.modelConfig?.provider === 'openai') {
         assistantMessage = await this.chatWithOpenAI();
       } else {
-        return this.getSimulatedResponse(userMessage);
+        const response = this.getSimulatedResponse(userMessage);
+        this.trackConfirmationState(response);
+        return response;
       }
 
       // Add to history
@@ -101,9 +117,166 @@ export class ConversationalAgent {
         content: assistantMessage,
       });
 
+      // Track if we just asked for confirmation
+      this.trackConfirmationState(assistantMessage);
+
       return assistantMessage;
     } catch (error) {
       return `Error communicating with ${this.agentName}: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+
+  /**
+   * Check if user message is a confirmation to proceed
+   */
+  private shouldExecutePlan(userMessage: string): boolean {
+    if (!this.lastResponseWasConfirmation || !this.pendingPlan) {
+      return false;
+    }
+
+    const lower = userMessage.toLowerCase().trim();
+    const confirmationPhrases = ['yes', 'y', 'proceed', 'do it', 'go ahead', 'let\'s go', 'start'];
+
+    return confirmationPhrases.some((phrase) => lower === phrase || lower.startsWith(phrase));
+  }
+
+  /**
+   * Track if assistant response included a confirmation question
+   */
+  private trackConfirmationState(assistantMessage: string): void {
+    const lower = assistantMessage.toLowerCase();
+    const hasConfirmationQuestion =
+      lower.includes('should i proceed') ||
+      lower.includes('proceed?') ||
+      lower.includes('should i') ||
+      lower.includes('shall i');
+
+    this.lastResponseWasConfirmation = hasConfirmationQuestion;
+
+    // Extract plan if this is Alpha asking for confirmation
+    if (hasConfirmationQuestion && this.agentName === 'Alpha') {
+      this.pendingPlan = this.extractPlanFromMessage(assistantMessage);
+    }
+  }
+
+  /**
+   * Extract orchestration plan from assistant message
+   */
+  private extractPlanFromMessage(message: string): OrchestrationPlan | null {
+    // Simple extraction - in production this could be more sophisticated
+    const hasForge = message.toLowerCase().includes('forge');
+    const hasBlink = message.toLowerCase().includes('blink');
+    const hasQA = message.toLowerCase().includes('qa-lens');
+
+    if (!hasForge && !hasBlink && !hasQA) {
+      return null;
+    }
+
+    return {
+      feature: 'User requested feature',
+      agents: {
+        ...(hasForge && {
+          forge: {
+            tasks: ['Build backend components'],
+            files: ['api/**'],
+          },
+        }),
+        ...(hasBlink && {
+          blink: {
+            tasks: ['Build frontend components'],
+            files: ['ui/**'],
+          },
+        }),
+        ...(hasQA && {
+          qaLens: {
+            flow: 'smoke/ui_submit_and_render',
+            env: { baseUrl: 'http://localhost:5050' },
+          },
+        }),
+      },
+    };
+  }
+
+  /**
+   * Execute the pending orchestration plan
+   */
+  private async executePendingPlan(): Promise<string> {
+    if (!this.pendingPlan) {
+      return 'No plan to execute. Please request a feature first.';
+    }
+
+    const plan = this.pendingPlan;
+    this.pendingPlan = null;
+    this.lastResponseWasConfirmation = false;
+
+    // Stream progress updates
+    let progressMessage = '🚀 Starting P→I→V loop...\n\n';
+
+    this.orchestrator.on('phase:start', (data) => {
+      const emoji = { plan: '📋', implement: '🔨', validate: '✅' }[data.phase] || '⚙️';
+      progressMessage += `${emoji} Phase: ${data.phase.toUpperCase()}\n`;
+    });
+
+    this.orchestrator.on('agent:start', (data) => {
+      progressMessage += `  → ${data.agent} starting...\n`;
+    });
+
+    this.orchestrator.on('agent:complete', (data) => {
+      const status = data.result.success ? '✅' : '❌';
+      progressMessage += `  ${status} ${data.agent}: ${data.result.status}\n`;
+    });
+
+    try {
+      const result = await this.orchestrator.execute(plan);
+
+      progressMessage += '\n' + '='.repeat(50) + '\n\n';
+
+      if (result.success) {
+        progressMessage += '✅ **All phases completed successfully!**\n\n';
+        progressMessage += `📊 Duration: ${result.duration_ms}ms\n`;
+
+        if (result.validate?.artifacts) {
+          progressMessage += `📸 Screenshots: ${result.validate.artifacts.length}\n`;
+        }
+
+        if (result.validate?.runPath) {
+          progressMessage += `📁 Artifacts: ${result.validate.runPath}\n`;
+        }
+
+        progressMessage += '\n✨ Feature is ready to merge!';
+      } else {
+        progressMessage += `❌ **${result.error}**\n\n`;
+
+        if (result.plan && !result.plan.success) {
+          progressMessage += `Planning failed: ${result.plan.error}\n`;
+        }
+        if (result.build && !result.build.success) {
+          progressMessage += `Build failed: ${result.build.error}\n`;
+        }
+        if (result.validate && !result.validate.success) {
+          progressMessage += `Validation failed: ${result.validate.error}\n`;
+        }
+
+        progressMessage += '\n🔧 Please review the errors and try again.';
+      }
+
+      // Add orchestration result to history
+      this.conversationHistory.push({
+        role: 'assistant',
+        content: progressMessage,
+      });
+
+      return progressMessage;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorResponse = `❌ Orchestration error: ${errorMsg}`;
+
+      this.conversationHistory.push({
+        role: 'assistant',
+        content: errorResponse,
+      });
+
+      return errorResponse;
     }
   }
 
