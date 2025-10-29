@@ -1,0 +1,93 @@
+name: TinyLink - URL Shortener
+description: A minimal URL shortener service with API and web UI
+version: 0.1.0
+
+requirements:
+  functional:
+    - Users can submit a long URL and receive a short code
+    - Visiting the short URL redirects to the original URL
+    - Each redirect increments a click counter
+    - Users can view click statistics for any short URL
+    - Short codes are 6 characters (alphanumeric)
+    - URLs are stored in-memory (no persistence required for MVP)
+
+  non_functional:
+    - API responds within 100ms for shortening
+    - Redirects happen within 50ms
+    - UI is responsive and mobile-friendly
+    - No authentication required for MVP
+
+acceptance_criteria:
+  - Given a long URL, when I POST to /api/shorten, then I receive a JSON response with a short code
+  - Given a valid short code, when I GET /:code, then I am redirected (302) to the original URL
+  - Given a short code, when I GET /api/stats/:code, then I see the click count
+  - Given the web UI, when I paste a URL and click Shorten, then I see the shortened link displayed
+  - Given a shortened link displayed, when I click Copy, then the link is copied to clipboard
+  - Given I visit a short link twice, when I check stats, then the count shows 2
+
+architecture:
+  backend:
+    path: /api
+    owner: Forge
+    tech: Node.js + Fastify
+    files:
+      - /api/server.ts
+      - /api/routes/shorten.ts
+      - /api/lib/url-store.ts
+
+  frontend:
+    path: /ui
+    owner: Blink
+    tech: HTML + CSS + Vanilla JS
+    files:
+      - /ui/index.html
+      - /ui/style.css
+      - /ui/app.js
+
+  validation:
+    path: /checks/flows
+    owner: QA-Lens
+    flows:
+      - tinylink_create_and_redirect.yaml
+      - tinylink_stats_increment.yaml
+
+implementation_plan:
+  - step: 1
+    name: Backend - URL storage and shortening logic
+    owner: Forge
+    tasks:
+      - Create in-memory URL store with Map
+      - Generate 6-char random codes
+      - Implement POST /api/shorten endpoint
+      - Implement GET /api/:code redirect endpoint
+      - Implement GET /api/stats/:code endpoint
+      - Add CORS headers for UI
+
+  - step: 2
+    name: Frontend - URL shortening UI
+    owner: Blink
+    tasks:
+      - Create HTML form with URL input
+      - Style with clean, modern CSS
+      - Add JavaScript to call /api/shorten
+      - Display shortened URL result
+      - Implement copy-to-clipboard
+      - Show click statistics
+
+  - step: 3
+    name: Validation - E2E browser tests
+    owner: QA-Lens
+    tasks:
+      - Create flow: submit URL → verify short link → visit → verify redirect
+      - Create flow: visit link multiple times → verify stats increment
+      - Take screenshots at each step
+      - Verify clipboard contains correct URL
+
+delivery:
+  timeline: 2 hours
+  demo_url: http://localhost:5000
+  artifacts:
+    - Working API on port 5000
+    - Web UI accessible at /
+    - All validation flows passing
+    - Screenshots in runs/ directory

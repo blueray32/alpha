@@ -1,0 +1,15 @@
+name: tinylink/stats_update
+description: Verify that click stats increment when visiting short URL
+owner: QA-Lens
+
+steps:
+  - open: "${baseUrl}/"
+  - type:
+      selector: "#url-input"
+      text: "https://anthropic.com"
+
+  - click: "#shorten-btn"
+  - wait_for: "#result"
+
+  - assert: "#click-count"
+  - screenshot: "checks/run-${run_id}/01_initial_stats.png"

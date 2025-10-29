@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TinyLink - URL Shortener</title>
+    <link rel="stylesheet" href="/ui/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔗 TinyLink</h1>
+            <p class="tagline">Shorten your URLs instantly</p>
+        </header>
+
+        <main>
+            <div class="card">
+                <form id="shorten-form">
+                    <div class="form-group">
+                        <label for="url-input">Enter your long URL</label>
+                        <input
+                            type="url"
+                            id="url-input"
+                            name="url"
+                            placeholder="https://example.com/very/long/url/path"
+                            required
+                            autocomplete="off"
+                        >
+                    </div>
+                    <button type="submit" id="shorten-btn">
+                        <span class="btn-text">Shorten URL</span>
+                        <span class="btn-loading" style="display: none;">Shortening...</span>
+                    </button>
+                </form>
+
+                <div id="result" class="result" style="display: none;">
+                    <h3>✨ Your short link</h3>
+                    <div class="short-url-container">
+                        <input
+                            type="text"
+                            id="short-url"
+                            readonly
+                            class="short-url-input"
+                        >
+                        <button id="copy-btn" class="copy-btn">
+                            <span class="copy-text">Copy</span>
+                            <span class="copied-text" style="display: none;">✓ Copied!</span>
+                        </button>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Original URL:</span>
+                            <a id="original-url" href="#" target="_blank" class="stat-value"></a>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Clicks:</span>
+                            <span id="click-count" class="stat-value">0</span>
+                            <button id="refresh-stats" class="refresh-btn">↻</button>
+                        </div>
+                    </div>
+
+                    <button id="shorten-another" class="secondary-btn">Shorten Another</button>
+                </div>
+
+                <div id="error" class="error" style="display: none;"></div>
+            </div>
+
+            <div class="info-card">
+                <h3>How it works</h3>
+                <ol>
+                    <li>Paste your long URL above</li>
+                    <li>Get a short link instantly</li>
+                    <li>Share it anywhere!</li>
+                </ol>
+            </div>
+        </main>
+
+        <footer>
+            <p>Built with <a href="https://github.com/blueray32/alpha" target="_blank">Alpha</a> - A multi-agent development system</p>
+            <p class="owner-info">Frontend: Blink (owns /ui/**)</p>
+        </footer>
+    </div>
+
+    <script src="/ui/app.js"></script>
+</body>
+</html>

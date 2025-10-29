@@ -1,0 +1,22 @@
+name: tinylink/create_and_redirect
+description: Test creating a short URL and verifying the redirect works
+owner: QA-Lens
+
+steps:
+  - open: "${baseUrl}/"
+  - assert: "#url-input"
+  - assert: "#shorten-btn"
+  - screenshot: "checks/run-${run_id}/01_homepage.png"
+
+  - type:
+      selector: "#url-input"
+      text: "https://github.com/blueray32/alpha"
+
+  - click: "#shorten-btn"
+  - wait_for: "#result"
+  - screenshot: "checks/run-${run_id}/02_short_url_created.png"
+
+  - assert: "#short-url"
+  - assert: "#copy-btn"
+  - assert: "#original-url"
+  - screenshot: "checks/run-${run_id}/03_result_displayed.png"

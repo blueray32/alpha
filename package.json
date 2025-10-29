@@ -7,6 +7,7 @@
   "scripts": {
     "dev:server": "tsx watch src/server.ts",
     "dev:tower": "cd tower && npm run dev",
+    "dev:tinylink": "tsx watch api/server.ts",
     "validate": "tsx src/cli/validate.ts",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -16,22 +17,23 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "fastify": "^4.25.2",
     "@fastify/cors": "^8.4.2",
-    "yaml": "^2.3.4",
-    "playwright": "^1.40.1",
+    "@fastify/static": "^6.12.0",
     "ajv": "^8.12.0",
-    "nanoid": "^5.0.4"
+    "fastify": "^4.25.2",
+    "nanoid": "^5.0.4",
+    "playwright": "^1.40.1",
+    "yaml": "^2.3.4"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",
-    "typescript": "^5.3.3",
-    "tsx": "^4.7.0",
-    "vitest": "^1.1.0",
-    "eslint": "^8.56.0",
     "@typescript-eslint/eslint-plugin": "^6.17.0",
     "@typescript-eslint/parser": "^6.17.0",
-    "prettier": "^3.1.1"
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
   },
   "engines": {
     "node": ">=20.0.0"
