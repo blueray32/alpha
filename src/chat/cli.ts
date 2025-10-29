@@ -30,11 +30,17 @@ async function main() {
   console.log(chalk.bold.cyan('\n🤖 Alpha Conversational Agents\n'));
   console.log('Chat naturally with Forge (backend), Blink (frontend), or QA-Lens (testing)\n');
 
-  // Check for API key
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    console.log(chalk.yellow('⚠️  No ANTHROPIC_API_KEY found - running in DEMO mode'));
-    console.log(chalk.gray('   Set ANTHROPIC_API_KEY environment variable for full AI responses\n'));
+  // Check for API keys
+  const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+  const hasOpenAI = !!process.env.OPENAI_API_KEY;
+
+  if (!hasAnthropic && !hasOpenAI) {
+    console.log(chalk.yellow('⚠️  No API keys found - running in DEMO mode'));
+    console.log(chalk.gray('   Set ANTHROPIC_API_KEY or OPENAI_API_KEY for full AI responses\n'));
+  } else if (hasAnthropic) {
+    console.log(chalk.green('✅ Anthropic API key detected - will autodiscover model\n'));
+  } else if (hasOpenAI) {
+    console.log(chalk.green('✅ OpenAI API key detected\n'));
   }
 
   // Select agent
@@ -53,14 +59,11 @@ async function main() {
     },
   ]);
 
-  const agent = new ConversationalAgent(
-    {
-      name: agentName,
-      personaPath: AGENTS[agentName].persona,
-      apiEndpoint: 'http://localhost:3001',
-    },
-    apiKey
-  );
+  const agent = new ConversationalAgent({
+    name: agentName,
+    personaPath: AGENTS[agentName].persona,
+    apiEndpoint: 'http://localhost:3001',
+  });
 
   const agentColor = AGENTS[agentName].color;
 

@@ -1,11 +1,14 @@
 /**
  * Conversational Agent System for Alpha
  * Enables natural language interaction with Forge, Blink, and QA-Lens
+ * Supports Anthropic and OpenAI with automatic model discovery
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { modelDiscovery, type ModelConfig } from '../lib/model-discovery.js';
 
 export type AgentName = 'Alpha' | 'Forge' | 'Blink' | 'QA-Lens';
 
@@ -21,23 +24,45 @@ export interface ChatMessage {
 }
 
 export class ConversationalAgent {
-  private client: Anthropic | null = null;
+  private anthropicClient: Anthropic | null = null;
+  private openaiClient: OpenAI | null = null;
+  private modelConfig: ModelConfig | null = null;
   private persona: string;
   private conversationHistory: ChatMessage[] = [];
   private agentName: AgentName;
   private alphaApiBase: string;
+  private initialized: boolean = false;
 
-  constructor(config: AgentConfig, apiKey?: string) {
+  constructor(config: AgentConfig) {
     this.agentName = config.name;
     this.alphaApiBase = config.apiEndpoint;
 
     // Load persona
     const personaPath = join(process.cwd(), config.personaPath);
     this.persona = readFileSync(personaPath, 'utf-8');
+  }
 
-    // Initialize Anthropic client if API key is provided
-    if (apiKey) {
-      this.client = new Anthropic({ apiKey });
+  /**
+   * Initialize the agent with model discovery
+   */
+  private async initialize(): Promise<void> {
+    if (this.initialized) return;
+
+    try {
+      // Discover best available model
+      this.modelConfig = await modelDiscovery.discover();
+
+      // Initialize appropriate client
+      if (this.modelConfig.provider === 'anthropic') {
+        this.anthropicClient = new Anthropic({ apiKey: this.modelConfig.apiKey });
+      } else if (this.modelConfig.provider === 'openai') {
+        this.openaiClient = new OpenAI({ apiKey: this.modelConfig.apiKey });
+      }
+
+      this.initialized = true;
+    } catch (error) {
+      console.warn('⚠️  AI initialization failed, using demo mode:', error instanceof Error ? error.message : '');
+      // Will fall back to demo mode
     }
   }
 
@@ -48,23 +73,27 @@ export class ConversationalAgent {
       content: userMessage,
     });
 
-    if (!this.client) {
-      // Demo mode - return simulated response
+    // Initialize on first use
+    if (!this.initialized) {
+      await this.initialize();
+    }
+
+    // Demo mode if no client available
+    if (!this.anthropicClient && !this.openaiClient) {
       return this.getSimulatedResponse(userMessage);
     }
 
     try {
-      // Call Claude API
-      const response = await this.client.messages.create({
-        model: 'claude-3-opus-20240229',
-        max_tokens: 2048,
-        system: this.buildSystemPrompt(),
-        messages: this.conversationHistory,
-      });
+      let assistantMessage: string;
 
-      const assistantMessage = response.content[0].type === 'text'
-        ? response.content[0].text
-        : '';
+      // Route to appropriate provider
+      if (this.anthropicClient && this.modelConfig?.provider === 'anthropic') {
+        assistantMessage = await this.chatWithAnthropic();
+      } else if (this.openaiClient && this.modelConfig?.provider === 'openai') {
+        assistantMessage = await this.chatWithOpenAI();
+      } else {
+        return this.getSimulatedResponse(userMessage);
+      }
 
       // Add to history
       this.conversationHistory.push({
@@ -73,10 +102,46 @@ export class ConversationalAgent {
       });
 
       return assistantMessage;
-
     } catch (error) {
       return `Error communicating with ${this.agentName}: ${error instanceof Error ? error.message : String(error)}`;
     }
+  }
+
+  private async chatWithAnthropic(): Promise<string> {
+    if (!this.anthropicClient || !this.modelConfig) {
+      throw new Error('Anthropic client not initialized');
+    }
+
+    const response = await this.anthropicClient.messages.create({
+      model: this.modelConfig.model,
+      max_tokens: 2048,
+      system: this.buildSystemPrompt(),
+      messages: this.conversationHistory,
+    });
+
+    return response.content[0].type === 'text' ? response.content[0].text : '';
+  }
+
+  private async chatWithOpenAI(): Promise<string> {
+    if (!this.openaiClient || !this.modelConfig) {
+      throw new Error('OpenAI client not initialized');
+    }
+
+    const messages = [
+      { role: 'system' as const, content: this.buildSystemPrompt() },
+      ...this.conversationHistory.map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      })),
+    ];
+
+    const response = await this.openaiClient.chat.completions.create({
+      model: this.modelConfig.model,
+      max_tokens: 2048,
+      messages,
+    });
+
+    return response.choices[0]?.message?.content || '';
   }
 
   private buildSystemPrompt(): string {
