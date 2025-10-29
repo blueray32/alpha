@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic execution of orchestration when user confirms plan
 - Progress streaming during P→I→V execution with emoji indicators
 - Context tracking to maintain plan state between messages
+- GuardedWriter utility that enforces contract guard on all file writes
+- Violation artifacts automatically created in /runs/** with timestamps and details
+- HTTP 403 responses returned for contract violations
+- SSE events (write:denied, write:success) broadcast for real-time observability
 
 ### Changed
 - Agent chat system now discovers models at runtime instead of using hardcoded IDs
@@ -25,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved error handling with graceful fallback to demo mode
 - Conversational agents now coordinate real P→I→V workflow via orchestrator
 - Chat interface displays detailed progress during feature builds
+- All file writes now enforced through GuardedWriter utility (mandatory contract checking)
+- Build command now creates actual files or returns 403 with violation artifacts
 
 ### Fixed
 - 404 errors from hardcoded Claude model IDs

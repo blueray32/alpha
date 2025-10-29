@@ -5,6 +5,7 @@ import { EventEmitter } from 'events';
 import { AgentRegistry } from './lib/agent-registry.js';
 import { RunManager } from './lib/run-manager.js';
 import { ContractGuard } from './lib/contract-guard.js';
+import { GuardedWriter } from './lib/guarded-writer.js';
 import { ValidationRunner } from './lib/validation-runner.js';
 import { agentRoutes } from './routes/agents.js';
 import { commandRoutes } from './routes/commands.js';
@@ -28,6 +29,7 @@ async function buildServer() {
   const registry = new AgentRegistry();
   const runManager = new RunManager();
   const contractGuard = new ContractGuard(join(process.cwd(), 'contracts/scopes.yaml'));
+  const guardedWriter = new GuardedWriter(contractGuard, runManager);
   const validationRunner = new ValidationRunner();
 
   // SSE endpoint for Tower
@@ -49,6 +51,8 @@ async function buildServer() {
       'command:start': sendEvent,
       'command:end': sendEvent,
       'command:error': sendEvent,
+      'write:denied': sendEvent,
+      'write:success': sendEvent,
     };
 
     // Attach listeners
@@ -73,7 +77,7 @@ async function buildServer() {
 
   // Register routes
   await agentRoutes(fastify, registry);
-  await commandRoutes(fastify, registry, runManager, contractGuard, validationRunner, eventBus);
+  await commandRoutes(fastify, registry, runManager, contractGuard, validationRunner, eventBus, guardedWriter);
 
   // Root route - API info
   fastify.get('/', async () => {

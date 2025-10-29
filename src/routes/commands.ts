@@ -6,6 +6,7 @@ import { AgentRegistry } from '../lib/agent-registry.js';
 import { RunManager } from '../lib/run-manager.js';
 import { ValidationRunner } from '../lib/validation-runner.js';
 import { ContractGuard } from '../lib/contract-guard.js';
+import { GuardedWriter } from '../lib/guarded-writer.js';
 import { CommandRequest, CommandResponse } from '../types/index.js';
 
 const ajv = new Ajv();
@@ -20,7 +21,8 @@ export async function commandRoutes(
   runManager: RunManager,
   contractGuard: ContractGuard,
   validationRunner: ValidationRunner,
-  eventBus: EventBus
+  eventBus: EventBus,
+  guardedWriter: GuardedWriter
 ): Promise<void> {
   // Load schemas
   const schemas = {
@@ -78,7 +80,7 @@ export async function commandRoutes(
           );
           break;
         case '/build':
-          response = await handleBuild(cmdRequest, agent.name, contractGuard, runManager);
+          response = await handleBuild(cmdRequest, agent.name, guardedWriter, eventBus);
           break;
         case '/plan':
           response = await handlePlan(cmdRequest, agent.name, runManager);
@@ -114,6 +116,12 @@ export async function commandRoutes(
       });
 
       registry.updateStatus(id, 'idle');
+
+      // Return 403 for contract violations
+      if (response.status === 'denied') {
+        return reply.code(403).send(response);
+      }
+
       return reply.send(response);
     } catch (error) {
       registry.updateStatus(id, 'idle');
@@ -161,29 +169,63 @@ async function handleValidate(
 async function handleBuild(
   request: CommandRequest,
   agentName: string,
-  contractGuard: ContractGuard,
-  runManager: RunManager
+  guardedWriter: GuardedWriter,
+  eventBus: EventBus
 ): Promise<CommandResponse> {
-  const { files } = request.payload as { files?: string[] };
+  const payload = request.payload as {
+    files?: Array<{ path: string; content: string }>;
+    feature?: string;
+    tasks?: string[];
+  };
 
-  if (files && files.length > 0) {
-    const validation = contractGuard.validateWrites(agentName, files);
-    if (!validation.allowed) {
-      return {
-        success: false,
-        runPath: '',
-        status: 'blocked',
-        error: `Contract violations: ${validation.violations.join('; ')}`,
-      };
-    }
+  const { files, feature, tasks } = payload;
+
+  // If no files provided, just acknowledge the build intent
+  if (!files || files.length === 0) {
+    return {
+      success: true,
+      runPath: '',
+      status: 'completed',
+      message: `Build acknowledged for: ${feature || 'feature'}. Tasks: ${tasks?.join(', ') || 'none specified'}`,
+    };
   }
 
-  // Stub implementation - just acknowledge
+  // Attempt to write files with contract guard
+  const result = await guardedWriter.writeFilesWithGuard(agentName, files);
+
+  if (!result.success) {
+    // Emit SSE event for denied write
+    eventBus.emit('write:denied', {
+      time: new Date().toISOString(),
+      agent: agentName,
+      status: 'denied',
+      violations: result.violations,
+      attemptedFiles: files.map((f) => f.path),
+    });
+
+    return {
+      success: false,
+      runPath: '',
+      status: 'denied',
+      error: `Contract violations: ${result.violations.join('; ')}`,
+      violations: result.violations,
+    };
+  }
+
+  // Success - emit event
+  eventBus.emit('write:success', {
+    time: new Date().toISOString(),
+    agent: agentName,
+    status: 'completed',
+    filesWritten: files.map((f) => f.path),
+  });
+
   return {
     success: true,
     runPath: '',
     status: 'completed',
-    message: 'Build command acknowledged (stub implementation)',
+    message: `Built ${files.length} file(s) successfully`,
+    artifacts: files.map((f) => f.path),
   };
 }
 
