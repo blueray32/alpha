@@ -16,16 +16,7 @@ class EventBus extends EventEmitter {}
 
 async function buildServer() {
   const fastify = Fastify({
-    logger: {
-      level: 'info',
-      transport: {
-        target: 'pino-pretty',
-        options: {
-          translateTime: 'HH:MM:ss Z',
-          ignore: 'pid,hostname',
-        },
-      },
-    },
+    logger: true,
   });
 
   await fastify.register(cors, {
