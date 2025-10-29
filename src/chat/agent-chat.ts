@@ -11,6 +11,7 @@ import { join } from 'path';
 import { modelDiscovery, type ModelConfig } from '../lib/model-discovery.js';
 import { Orchestrator, type OrchestrationPlan } from '../lib/orchestrator.js';
 import { OutcomeLedger } from '../lib/outcome-ledger.js';
+import { ConversationMemory } from '../lib/conversation-memory.js';
 
 export type AgentName = 'Alpha' | 'Forge' | 'Blink' | 'QA-Lens';
 
@@ -38,6 +39,7 @@ export class ConversationalAgent {
   private orchestrator: Orchestrator;
   private pendingPlan: OrchestrationPlan | null = null;
   private lastResponseWasConfirmation: boolean = false;
+  private memory: ConversationMemory;
 
   constructor(config: AgentConfig) {
     this.agentName = config.name;
@@ -54,6 +56,10 @@ export class ConversationalAgent {
     if (config.outcomeLedger) {
       config.outcomeLedger.attach(this.orchestrator);
     }
+
+    // Initialize conversation memory
+    this.memory = new ConversationMemory(this.agentName);
+    this.memory.startConversation();
   }
 
   /**
@@ -82,9 +88,16 @@ export class ConversationalAgent {
 
   async chat(userMessage: string): Promise<string> {
     // Add user message to history
-    this.conversationHistory.push({
-      role: 'user',
+    const userMsg = {
+      role: 'user' as const,
       content: userMessage,
+    };
+    this.conversationHistory.push(userMsg);
+
+    // Save to persistent memory
+    this.memory.appendMessage({
+      ...userMsg,
+      timestamp: new Date().toISOString(),
     });
 
     // Initialize on first use
@@ -119,9 +132,16 @@ export class ConversationalAgent {
       }
 
       // Add to history
-      this.conversationHistory.push({
-        role: 'assistant',
+      const assistantMsg = {
+        role: 'assistant' as const,
         content: assistantMessage,
+      };
+      this.conversationHistory.push(assistantMsg);
+
+      // Save to persistent memory
+      this.memory.appendMessage({
+        ...assistantMsg,
+        timestamp: new Date().toISOString(),
       });
 
       // Track if we just asked for confirmation
@@ -432,6 +452,8 @@ Examples:
 
   resetConversation(): void {
     this.conversationHistory = [];
+    this.memory.clearCurrent();
+    this.memory.startConversation();
   }
 
   getHistory(): ChatMessage[] {

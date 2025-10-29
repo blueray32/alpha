@@ -179,7 +179,7 @@ export class OutcomeLedger {
         id: orchId,
         timestamp: startRecord.timestamp,
         feature: startRecord.data.plan?.feature || 'unknown',
-        success: completeRecord?.data.result === true,
+        success: completeRecord?.data.result === true || false,
         duration_ms: completeRecord?.data.duration_ms || 0,
         phases: {
           plan: {

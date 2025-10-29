@@ -5,6 +5,7 @@
 
 import EventEmitter from 'events';
 import { CommandRequest, CommandResponse } from '../types/index.js';
+import { RecoveryHooks } from './recovery-hooks.js';
 
 export interface OrchestrationPlan {
   feature: string;
@@ -35,80 +36,84 @@ export interface OrchestrationResult {
 
 export class Orchestrator extends EventEmitter {
   private apiBase: string;
+  private recovery: RecoveryHooks;
 
   constructor(apiBase = 'http://localhost:3001') {
     super();
     this.apiBase = apiBase;
+    this.recovery = new RecoveryHooks();
+
+    // Register recovery callback for orchestration
+    this.recovery.registerRecoveryCallback('orchestration', async (context) => {
+      console.log(`[Orchestrator] Recovering orchestration: ${context.checkpointId}`);
+      // Recovery logic can be added here if needed
+    });
   }
 
   /**
-   * Execute full P→I→V loop
+   * Execute full P→I→V loop with recovery support
    */
   async execute(plan: OrchestrationPlan): Promise<OrchestrationResult> {
     const startTime = Date.now();
 
-    this.emit('orchestration:start', { plan });
+    // Use recovery hooks for automatic retry on failure
+    return this.recovery.executeWithRecovery(
+      'orchestration',
+      { feature: plan.feature },
+      async (checkpoint) => {
+        this.emit('orchestration:start', { plan });
 
-    try {
-      // Step 1: Plan
-      this.emit('phase:start', { phase: 'plan' });
-      const planResult = await this.executePlan(plan);
-      this.emit('phase:complete', { phase: 'plan', result: planResult });
+        try {
+          // Step 1: Plan
+          this.emit('phase:start', { phase: 'plan' });
+          const planResult = await this.executePlan(plan);
+          this.recovery.markStepCompleted('plan');
+          this.emit('phase:complete', { phase: 'plan', result: planResult });
 
-      if (!planResult.success) {
-        return {
-          success: false,
-          plan: planResult,
-          error: 'Planning failed',
-          duration_ms: Date.now() - startTime,
-        };
-      }
+          if (!planResult.success) {
+            throw new Error('Planning failed');
+          }
 
-      // Step 2: Implement (Build)
-      this.emit('phase:start', { phase: 'implement' });
-      const buildResult = await this.executeBuild(plan);
-      this.emit('phase:complete', { phase: 'implement', result: buildResult });
+          // Step 2: Implement (Build)
+          this.emit('phase:start', { phase: 'implement' });
+          const buildResult = await this.executeBuild(plan);
+          this.recovery.markStepCompleted('implement');
+          this.emit('phase:complete', { phase: 'implement', result: buildResult });
 
-      if (!buildResult.success) {
-        return {
-          success: false,
-          plan: planResult,
-          build: buildResult,
-          error: 'Build failed',
-          duration_ms: Date.now() - startTime,
-        };
-      }
+          if (!buildResult.success) {
+            throw new Error('Build failed');
+          }
 
-      // Step 3: Validate
-      this.emit('phase:start', { phase: 'validate' });
-      const validateResult = await this.executeValidate(plan);
-      this.emit('phase:complete', { phase: 'validate', result: validateResult });
+          // Step 3: Validate
+          this.emit('phase:start', { phase: 'validate' });
+          const validateResult = await this.executeValidate(plan);
+          this.recovery.markStepCompleted('validate');
+          this.emit('phase:complete', { phase: 'validate', result: validateResult });
 
-      const success = validateResult.success;
-      const result: OrchestrationResult = {
-        success,
-        plan: planResult,
-        build: buildResult,
-        validate: validateResult,
-        duration_ms: Date.now() - startTime,
-      };
+          const success = validateResult.success;
+          const result: OrchestrationResult = {
+            success,
+            plan: planResult,
+            build: buildResult,
+            validate: validateResult,
+            duration_ms: Date.now() - startTime,
+          };
 
-      if (!success) {
-        result.error = 'Validation failed';
-      }
+          if (!success) {
+            result.error = 'Validation failed';
+            throw new Error('Validation failed');
+          }
 
-      this.emit('orchestration:complete', { result });
-      return result;
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      this.emit('orchestration:error', { error: errorMsg });
-
-      return {
-        success: false,
-        error: errorMsg,
-        duration_ms: Date.now() - startTime,
-      };
-    }
+          this.emit('orchestration:complete', { result });
+          return result;
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          this.emit('orchestration:error', { error: errorMsg });
+          throw error;
+        }
+      },
+      1 // Only retry once for now
+    );
   }
 
   /**
