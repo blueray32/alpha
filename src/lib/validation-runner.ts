@@ -84,28 +84,66 @@ export class ValidationRunner {
     runId: string,
     screenshots: string[]
   ): Promise<void> {
+    // Handle 'open' step (navigate to URL)
     if ('open' in step) {
       const url = this.interpolateEnv(step.open, env);
-      await page.goto(url);
-    } else if ('assert' in step) {
+      console.log(`[Validator] Navigating to: ${url}`);
+      await page.goto(url, { waitUntil: 'networkidle' });
+      return;
+    }
+
+    // Handle 'assert' step (wait for selector to be visible)
+    if ('assert' in step) {
       const selector = step.assert;
-      await page.waitForSelector(selector, { timeout: 5000 });
-    } else if ('type' in step) {
+      console.log(`[Validator] Asserting element exists: ${selector}`);
+      await page.waitForSelector(selector, { timeout: 5000, state: 'visible' });
+      return;
+    }
+
+    // Handle 'type' step (fill input field)
+    if ('type' in step) {
       const { selector, text } = step.type;
+      console.log(`[Validator] Typing into ${selector}: ${text.substring(0, 20)}...`);
       await page.fill(selector, text);
-    } else if ('click' in step) {
-      await page.click(step.click);
-    } else if ('wait_for' in step) {
-      await page.waitForSelector(step.wait_for, { timeout: 10000 });
-    } else if ('screenshot' in step) {
+      return;
+    }
+
+    // Handle 'click' step
+    if ('click' in step) {
+      const selector = step.click;
+      console.log(`[Validator] Clicking: ${selector}`);
+      await page.click(selector);
+      return;
+    }
+
+    // Handle 'wait_for' step
+    if ('wait_for' in step) {
+      const selector = step.wait_for;
+      console.log(`[Validator] Waiting for: ${selector}`);
+      await page.waitForSelector(selector, { timeout: 10000 });
+      return;
+    }
+
+    // Handle 'screenshot' step
+    if ('screenshot' in step) {
       const screenshotPath = this.interpolateEnv(step.screenshot, {
         ...env,
         run_id: runId,
       });
       const fullPath = join(this.rootDir, screenshotPath);
+      console.log(`[Validator] Taking screenshot: ${screenshotPath}`);
+
+      // Ensure directory exists
+      const { mkdirSync } = await import('fs');
+      const { dirname } = await import('path');
+      mkdirSync(dirname(fullPath), { recursive: true });
+
       await page.screenshot({ path: fullPath, fullPage: true });
       screenshots.push(screenshotPath);
+      return;
     }
+
+    console.warn(`[Validator] Unknown step type:`, step);
   }
 
   private interpolateEnv(template: string, env: Record<string, string>): string {

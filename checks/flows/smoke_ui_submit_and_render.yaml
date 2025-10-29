@@ -1,11 +1,12 @@
 name: smoke/ui_submit_and_render
 steps:
   - open: "${baseUrl}/"
-  - assert: "#prompt-input"
+  - assert: "#url-input"
   - type:
-      selector: "#prompt-input"
-      text: "A serene mountain lake at sunrise"
-  - assert: "#submit:enabled"
-  - click: "#submit"
-  - wait_for: "#result-thumbnail"
-  - screenshot: "checks/run-${run_id}/thumbnail.png"
+      selector: "#url-input"
+      text: "https://example.com/test-url-for-validation"
+  - assert: "#shorten-btn"
+  - click: "#shorten-btn"
+  - wait_for: "#result"
+  - assert: "#short-url"
+  - screenshot: "checks/run-${run_id}/result.png"
