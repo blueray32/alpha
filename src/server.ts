@@ -72,6 +72,26 @@ async function buildServer() {
   await agentRoutes(fastify, registry);
   await commandRoutes(fastify, registry, runManager, contractGuard, validationRunner, eventBus);
 
+  // Root route - API info
+  fastify.get('/', async () => {
+    return {
+      name: 'Alpha Orchestrator',
+      version: '0.1.0',
+      description: 'Multi-agent orchestration API with P→I→V loop',
+      endpoints: {
+        'GET /': 'This API info page',
+        'GET /health': 'Health check',
+        'GET /agents': 'List all agents',
+        'POST /agents': 'Create a new agent',
+        'GET /agents/:id': 'Get agent details',
+        'POST /agents/:id/cmd': 'Execute a command (/plan, /build, /validate)',
+        'GET /events': 'SSE event stream for Tower',
+      },
+      tower: 'http://localhost:4000',
+      docs: 'https://github.com/blueray32/alpha',
+    };
+  });
+
   // Health check
   fastify.get('/health', async () => {
     return {
