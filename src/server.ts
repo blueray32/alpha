@@ -7,6 +7,7 @@ import { RunManager } from './lib/run-manager.js';
 import { ContractGuard } from './lib/contract-guard.js';
 import { GuardedWriter } from './lib/guarded-writer.js';
 import { ValidationRunner } from './lib/validation-runner.js';
+import { OutcomeLedger } from './lib/outcome-ledger.js';
 import { agentRoutes } from './routes/agents.js';
 import { commandRoutes } from './routes/commands.js';
 
@@ -31,6 +32,7 @@ async function buildServer() {
   const contractGuard = new ContractGuard(join(process.cwd(), 'contracts/scopes.yaml'));
   const guardedWriter = new GuardedWriter(contractGuard, runManager);
   const validationRunner = new ValidationRunner();
+  const outcomeLedger = new OutcomeLedger();
 
   // SSE endpoint for Tower
   fastify.get('/events', async (request, reply) => {
@@ -105,6 +107,36 @@ async function buildServer() {
       status: 'ok',
       timestamp: new Date().toISOString(),
       agents: registry.getAllAgents().length,
+    };
+  });
+
+  // Outcome Ledger endpoints
+  fastify.get('/outcomes', async () => {
+    return {
+      summaries: outcomeLedger.getSummaries(),
+      total: outcomeLedger.getAllRecords().length,
+    };
+  });
+
+  fastify.get('/outcomes/latest', async () => {
+    const latest = outcomeLedger.getLatestSummary();
+    if (!latest) {
+      return { error: 'No outcomes recorded yet' };
+    }
+    return latest;
+  });
+
+  fastify.get('/outcomes/:id', async (request) => {
+    const { id } = request.params as { id: string };
+    const records = outcomeLedger.getOrchestrationRecords(id);
+
+    if (records.length === 0) {
+      return { error: 'Orchestration not found' };
+    }
+
+    return {
+      orchestrationId: id,
+      records,
     };
   });
 

@@ -10,6 +10,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { modelDiscovery, type ModelConfig } from '../lib/model-discovery.js';
 import { Orchestrator, type OrchestrationPlan } from '../lib/orchestrator.js';
+import { OutcomeLedger } from '../lib/outcome-ledger.js';
 
 export type AgentName = 'Alpha' | 'Forge' | 'Blink' | 'QA-Lens';
 
@@ -17,6 +18,7 @@ export interface AgentConfig {
   name: AgentName;
   personaPath: string;
   apiEndpoint: string;
+  outcomeLedger?: OutcomeLedger;
 }
 
 export interface ChatMessage {
@@ -47,6 +49,11 @@ export class ConversationalAgent {
 
     // Initialize orchestrator
     this.orchestrator = new Orchestrator(config.apiEndpoint);
+
+    // Attach outcome ledger if provided
+    if (config.outcomeLedger) {
+      config.outcomeLedger.attach(this.orchestrator);
+    }
   }
 
   /**

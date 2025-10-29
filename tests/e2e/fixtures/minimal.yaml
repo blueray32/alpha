@@ -1,0 +1,3 @@
+name: minimal-test
+steps:
+  - open: "https://example.com"
