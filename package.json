@@ -12,6 +12,7 @@
     "validate": "tsx src/cli/validate.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "tsx tests/e2e/smoke.test.ts",
     "lint": "eslint src/ --ext .ts",
     "format": "prettier --write \"src/**/*.ts\" \"tower/**/*.{ts,tsx}\"",
     "build": "tsc && cd tower && npm run build",
