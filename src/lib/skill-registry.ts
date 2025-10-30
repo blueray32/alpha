@@ -45,6 +45,9 @@ export class SkillRegistry {
 
     // Register built-in skills
     this.registerBuiltInSkills();
+
+    // Register extended skills
+    this.registerExtendedSkills();
   }
 
   /**
