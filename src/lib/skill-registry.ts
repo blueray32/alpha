@@ -212,6 +212,153 @@ export class SkillRegistry {
   }
 
   /**
+   * Register extended skills (production skills library)
+   */
+  private registerExtendedSkills(): void {
+    // Database Model Skill
+    this.registerSkill({
+      name: 'create_database_model',
+      description: 'Generate a TypeScript database model with repository',
+      agent: 'Forge',
+      parameters: {
+        modelName: { type: 'string', description: 'Model name (e.g., User)', required: true },
+        fields: { type: 'array', description: 'Model fields with name and type', required: true },
+        tableName: { type: 'string', description: 'Database table name', required: false },
+      },
+      execute: async (params: SkillParams) => {
+        const modelName = String(params.modelName);
+        const tableName = params.tableName as string || modelName.toLowerCase() + 's';
+        const modelPrefix = modelName.toLowerCase().substring(0, 3);
+
+        const template = this.renderer.render('api/database-model.ts', {
+          ModelName: modelName,
+          tableName,
+          modelPrefix,
+          fields: params.fields || [],
+        });
+
+        const filePath = `api/models/${modelName.toLowerCase()}.ts`;
+        const result = await this.guardedWriter.writeFileWithGuard('Forge', filePath, template);
+
+        return {
+          success: result.success,
+          message: result.success ? `Created ${filePath}` : result.error || 'Write failed',
+          filePath: result.path,
+          error: result.error,
+        };
+      },
+    });
+
+    // React Component Skill
+    this.registerSkill({
+      name: 'create_react_component',
+      description: 'Generate a React TypeScript component',
+      agent: 'Blink',
+      parameters: {
+        componentName: { type: 'string', description: 'Component name (e.g., UserProfile)', required: true },
+        props: { type: 'array', description: 'Component props', required: false },
+        hasState: { type: 'boolean', description: 'Include state management', required: false },
+        hasEffects: { type: 'boolean', description: 'Include useEffect hooks', required: false },
+      },
+      execute: async (params: SkillParams) => {
+        const componentName = String(params.componentName);
+        const className = componentName.toLowerCase().replace(/([A-Z])/g, '-$1').toLowerCase();
+
+        const template = this.renderer.render('ui/react-component.tsx', {
+          ComponentName: componentName,
+          className,
+          heading: componentName.replace(/([A-Z])/g, ' $1').trim(),
+          props: params.props || [],
+          hasState: params.hasState || false,
+          hasEffects: params.hasEffects || false,
+          stateType: 'any',
+          initialState: 'null',
+        });
+
+        const filePath = `ui/components/${componentName}.tsx`;
+        const result = await this.guardedWriter.writeFileWithGuard('Blink', filePath, template);
+
+        return {
+          success: result.success,
+          message: result.success ? `Created ${filePath}` : result.error || 'Write failed',
+          filePath: result.path,
+          error: result.error,
+        };
+      },
+    });
+
+    // Unit Test Skill
+    this.registerSkill({
+      name: 'create_unit_test',
+      description: 'Generate a Vitest unit test file',
+      agent: 'QA-Lens',
+      parameters: {
+        moduleName: { type: 'string', description: 'Module being tested', required: true },
+        modulePath: { type: 'string', description: 'Relative path to module', required: true },
+        importName: { type: 'string', description: 'What to import from module', required: true },
+        tests: { type: 'array', description: 'Test case definitions', required: true },
+      },
+      execute: async (params: SkillParams) => {
+        const template = this.renderer.render('tests/unit-test.ts', {
+          moduleName: String(params.moduleName),
+          modulePath: String(params.modulePath),
+          importName: String(params.importName),
+          tests: params.tests || [],
+          needsMocks: params.needsMocks || false,
+          hasErrorCases: params.hasErrorCases || false,
+        });
+
+        const moduleName = String(params.moduleName).toLowerCase().replace(/\s+/g, '-');
+        const filePath = `tests/unit/${moduleName}.test.ts`;
+        const result = await this.guardedWriter.writeFileWithGuard('QA-Lens', filePath, template);
+
+        return {
+          success: result.success,
+          message: result.success ? `Created ${filePath}` : result.error || 'Write failed',
+          filePath: result.path,
+          error: result.error,
+        };
+      },
+    });
+
+    // Middleware Skill
+    this.registerSkill({
+      name: 'create_api_middleware',
+      description: 'Generate a Fastify middleware function',
+      agent: 'Forge',
+      parameters: {
+        middlewareName: { type: 'string', description: 'Middleware name (e.g., authMiddleware)', required: true },
+        description: { type: 'string', description: 'What the middleware does', required: true },
+        validations: { type: 'array', description: 'Validation rules', required: false },
+      },
+      execute: async (params: SkillParams) => {
+        const middlewareName = String(params.middlewareName);
+        const MiddlewareName = middlewareName.charAt(0).toUpperCase() + middlewareName.slice(1);
+
+        const template = this.renderer.render('api/middleware.ts', {
+          MiddlewareName,
+          middlewareName,
+          description: String(params.description),
+          options: params.options || [],
+          validations: params.validations || [],
+          hasLogging: params.hasLogging !== false,
+          logMessage: String(params.logMessage || `Processing ${middlewareName}`),
+        });
+
+        const filePath = `api/middleware/${middlewareName}.ts`;
+        const result = await this.guardedWriter.writeFileWithGuard('Forge', filePath, template);
+
+        return {
+          success: result.success,
+          message: result.success ? `Created ${filePath}` : result.error || 'Write failed',
+          filePath: result.path,
+          error: result.error,
+        };
+      },
+    });
+  }
+
+  /**
    * Convert API path to handler name
    */
   private toHandlerName(path: string): string {
