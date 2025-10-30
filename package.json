@@ -16,7 +16,8 @@
     "lint": "eslint src/ --ext .ts",
     "format": "prettier --write \"src/**/*.ts\" \"tower/**/*.{ts,tsx}\"",
     "build": "tsc && cd tower && npm run build",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "cleanup:memory": "tsx scripts/cleanup-memory.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
