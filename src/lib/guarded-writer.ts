@@ -7,6 +7,7 @@ import { writeFileSync, mkdirSync } from 'fs';
 import { dirname, join } from 'path';
 import { ContractGuard } from './contract-guard.js';
 import { RunManager } from './run-manager.js';
+import { SlashCommand } from '../types/index.js';
 
 export interface WriteResult {
   success: boolean;
@@ -160,7 +161,10 @@ export class GuardedWriter {
     const runPath = await this.runManager.createRun(
       agentName,
       '/build',
-      { slash: '/build' as any, payload: { violations: true } },
+      {
+        slash: '/build' as SlashCommand,
+        payload: { violations: true },
+      },
       {
         success: false,
         runPath: '',
