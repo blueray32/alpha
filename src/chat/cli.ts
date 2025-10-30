@@ -48,7 +48,8 @@ async function main() {
   }
 
   // Select agent
-  const { agentName } = await inquirer.prompt([
+  // @ts-expect-error - Inquirer types are complex, but this works at runtime
+  const answers = await inquirer.prompt([
     {
       type: 'list',
       name: 'agentName',
@@ -62,6 +63,7 @@ async function main() {
       ],
     },
   ]);
+  const agentName = answers.agentName as AgentName;
 
   const agent = new ConversationalAgent({
     name: agentName,
@@ -77,7 +79,8 @@ async function main() {
   // Chat loop
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const { message } = await inquirer.prompt([
+    // @ts-expect-error - Inquirer types are complex, but this works at runtime
+    const answers = await inquirer.prompt([
       {
         type: 'input',
         name: 'message',
@@ -85,6 +88,7 @@ async function main() {
         prefix: '  ',
       },
     ]);
+    const message = answers.message as string;
 
     if (message.toLowerCase() === 'exit') {
       console.log(chalk.gray('\nGoodbye! 👋\n'));

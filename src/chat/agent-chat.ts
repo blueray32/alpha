@@ -239,9 +239,10 @@ export class ConversationalAgent {
     // Stream progress updates
     let progressMessage = '🚀 Starting P→I→V loop...\n\n';
 
-    this.orchestrator.on('phase:start', (data) => {
-      const emoji = { plan: '📋', implement: '🔨', validate: '✅' }[data.phase] || '⚙️';
-      progressMessage += `${emoji} Phase: ${data.phase.toUpperCase()}\n`;
+    this.orchestrator.on('phase:start', (data: { phase: string }) => {
+      const emoji: Record<string, string> = { plan: '📋', implement: '🔨', validate: '✅' };
+      const phaseEmoji = emoji[data.phase] || '⚙️';
+      progressMessage += `${phaseEmoji} Phase: ${data.phase.toUpperCase()}\n`;
     });
 
     this.orchestrator.on('agent:start', (data) => {

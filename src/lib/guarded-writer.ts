@@ -160,7 +160,7 @@ export class GuardedWriter {
     const runPath = await this.runManager.createRun(
       agentName,
       '/build',
-      { violations: true },
+      { slash: '/build' as any, payload: { violations: true } },
       {
         success: false,
         runPath: '',

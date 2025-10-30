@@ -4,7 +4,7 @@
  */
 
 import EventEmitter from 'events';
-import { CommandRequest, CommandResponse } from '../types/index.js';
+import { CommandRequest, CommandResponse, SlashCommand } from '../types/index.js';
 import { RecoveryHooks } from './recovery-hooks.js';
 
 export interface OrchestrationPlan {
@@ -219,7 +219,10 @@ export class Orchestrator extends EventEmitter {
     // First, ensure agent exists
     const agentId = await this.getOrCreateAgent(agentName);
 
-    const request: CommandRequest = { slash, payload };
+    const request: CommandRequest = {
+      slash: slash as SlashCommand,
+      payload: payload as Record<string, unknown>
+    };
 
     try {
       const response = await fetch(`${this.apiBase}/agents/${agentId}/cmd`, {

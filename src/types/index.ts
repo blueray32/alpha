@@ -14,6 +14,7 @@ export interface Agent {
 export interface CommandRequest {
   slash: SlashCommand;
   payload: Record<string, unknown>;
+  violations?: boolean; // Flag for tracking violations
 }
 
 export interface CommandResponse {
@@ -23,6 +24,7 @@ export interface CommandResponse {
   message?: string;
   artifacts?: string[];
   error?: string;
+  violations?: string[]; // List of contract violations
 }
 
 export interface RunMetadata {
